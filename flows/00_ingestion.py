@@ -66,3 +66,12 @@ def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path =
     )
     log.info("Bronze listo: %d etiquetados, %d sin etiqueta", len(labeled), len(unlabeled))
     return metadata
+
+def quality_report(df: pd.DataFrame) -> dict:
+    """Resumen de calidad: dimensiones, tipos y faltantes por columna.
+
+    Debe devolver un dict con las claves:
+      n_rows, n_cols, dtypes ({col: str(dtype)}), nulls ({col: int}), null_pct ({col: float 0-100}).
+    """
+    # TODO: usar df.shape, df.dtypes, df.isnull().sum()
+    raise NotImplementedError
