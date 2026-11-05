@@ -36,8 +36,10 @@ def split_labeled(df: pd.DataFrame, n_labeled: int) -> tuple[pd.DataFrame, pd.Da
     return labeled, unlabeled
 
 
+
 def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path = BRONZE) -> dict:
     """Descarga, divide y guarda en Bronze. Devuelve los metadatos de la ingesta."""
+
     source = source or settings.local_path or settings.data_url
     n_labeled = n_labeled or settings.n_labeled
 
@@ -45,13 +47,26 @@ def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path =
     df = read_source(source)
     labeled, unlabeled = split_labeled(df, n_labeled)
 
+    # Crear la carpeta de salida antes de guardar archivos
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generar reporte automático de calidad
+    report = quality_report(labeled)
+
+    (out_dir / "_quality_report.json").write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    # Guardar los datos etiquetados y sin etiquetar
     labeled_path = out_dir / BRONZE_LABELED_NAME
     unlabeled_path = out_dir / BRONZE_UNLABELED_NAME
+
     labeled.to_csv(labeled_path, index=False)
     unlabeled.to_csv(unlabeled_path, index=False)
 
+    # Generar metadatos de la ingesta
     metadata = {
         "source": source,
         "ingested_at": datetime.now(timezone.utc).isoformat(),
@@ -61,11 +76,19 @@ def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path =
         "sha256_labeled": sha256_of(labeled_path),
         "sha256_unlabeled": sha256_of(unlabeled_path),
     }
+
     (out_dir / BRONZE_METADATA_NAME).write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(metadata, indent=2, ensure_ascii=False),
+        encoding="utf-8"
     )
-    log.info("Bronze listo: %d etiquetados, %d sin etiqueta", len(labeled), len(unlabeled))
+
+    log.info(
+        "Bronze listo: %d etiquetados, %d sin etiqueta",
+        len(labeled), len(unlabeled)
+    )
+
     return metadata
+
 
 
 def quality_report(df: pd.DataFrame) -> dict:

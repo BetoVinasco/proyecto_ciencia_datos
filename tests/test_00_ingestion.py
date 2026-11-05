@@ -38,3 +38,17 @@ def test_bronze_is_an_unmodified_copy(tmp_path):
     ing.run(source=source, n_labeled=3, out_dir=out)
     saved = pd.read_csv(out / "titanic_labeled.csv")
     pd.testing.assert_frame_equal(saved, original.iloc[:3].reset_index(drop=True))
+
+
+def test_quality_report_counts_nulls():
+    df = pd.DataFrame({
+        "a": [1, None, 3],
+        "b": ["x", "y", None]
+    })
+
+    rep = ing.quality_report(df)
+
+    assert rep["n_rows"] == 3
+    assert rep["n_cols"] == 2
+    assert rep["nulls"] == {"a": 1, "b": 1}
+    assert round(rep["null_pct"]["a"], 1) == 33.3

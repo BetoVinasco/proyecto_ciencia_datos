@@ -6,3 +6,13 @@
 2026-11-04 22:38:44,450 | INFO | flows.00_ingestion | Leyendo fuente: https://paste.c-net.org/MarvelJinxed
 2026-11-04 22:38:44,979 | INFO | flows.00_ingestion | Bronze listo: 891 etiquetados, 418 sin etiqueta
 2026-11-04 22:38:44,980 | INFO | __main__ | Fin de etapa: ingestion
+2026-11-05 21:54:48,254 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-1/test_run_writes_bronze_and_met0/fake.csv
+2026-11-05 21:54:48,294 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-1/test_bronze_is_an_unmodified_c0/fake.csv
+2026-11-05 21:57:58,828 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-2/test_run_writes_bronze_and_met0/fake.csv
+2026-11-05 21:57:58,832 | INFO | flows.00_ingestion | Bronze listo: 3 etiquetados, 2 sin etiqueta
+2026-11-05 21:57:58,834 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-2/test_bronze_is_an_unmodified_c0/fake.csv
+2026-11-05 21:57:58,836 | INFO | flows.00_ingestion | Bronze listo: 3 etiquetados, 2 sin etiqueta
+2026-11-05 21:58:11,726 | INFO | __main__ | Inicio de etapa: ingestion
+2026-11-05 21:58:11,726 | INFO | flows.00_ingestion | Leyendo fuente: https://paste.c-net.org/MarvelJinxed
+2026-11-05 21:58:13,029 | INFO | flows.00_ingestion | Bronze listo: 891 etiquetados, 418 sin etiqueta
+2026-11-05 21:58:13,030 | INFO | __main__ | Fin de etapa: ingestion
