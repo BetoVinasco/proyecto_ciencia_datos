@@ -67,11 +67,34 @@ def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path =
     log.info("Bronze listo: %d etiquetados, %d sin etiqueta", len(labeled), len(unlabeled))
     return metadata
 
-def quality_report(df: pd.DataFrame) -> dict:
-    """Resumen de calidad: dimensiones, tipos y faltantes por columna.
 
-    Debe devolver un dict con las claves:
-      n_rows, n_cols, dtypes ({col: str(dtype)}), nulls ({col: int}), null_pct ({col: float 0-100}).
-    """
-    # TODO: usar df.shape, df.dtypes, df.isnull().sum()
-    raise NotImplementedError
+def quality_report(df: pd.DataFrame) -> dict:
+    """Genera un resumen de calidad del DataFrame."""
+
+    n_rows, n_cols = df.shape
+
+    # Tipos de datos por columna
+    dtypes = {
+        col: str(dtype)
+        for col, dtype in df.dtypes.items()
+    }
+
+    # Cantidad de valores faltantes
+    nulls = {
+        col: int(count)
+        for col, count in df.isnull().sum().items()
+    }
+
+    # Porcentaje de valores faltantes
+    null_pct = {
+        col: float((count / n_rows * 100) if n_rows else 0.0)
+        for col, count in df.isnull().sum().items()
+    }
+
+    return {
+        "n_rows": int(n_rows),
+        "n_cols": int(n_cols),
+        "dtypes": dtypes,
+        "nulls": nulls,
+        "null_pct": null_pct,
+    }
