@@ -29,9 +29,54 @@ TITLE_MAP = {                        # consolidación de títulos (Paso 26)
 MAIN_TITLES = ["Mr", "Mrs", "Miss"]
 
 
-def validate_bronze(df: pd.DataFrame) -> pd.DataFrame: ...      # contrato de entrada
-def cast_types(df: pd.DataFrame) -> pd.DataFrame: ...           # Survived -> int, etc.
-def add_person(df: pd.DataFrame) -> pd.DataFrame: ...           # Paso 8
+#def validate_bronze(df: pd.DataFrame) -> pd.DataFrame: ...      # contrato de entrada
+def validate_bronze(df: pd.DataFrame) -> pd.DataFrame:
+    """Valida que Bronze tenga las columnas esperadas y sin IDs duplicados."""
+
+    missing = set(EXPECTED_COLUMNS) - set(df.columns)
+
+    if missing:
+        raise ValueError(f"Faltan columnas obligatorias: {sorted(missing)}")
+
+    if df["PassengerId"].duplicated().any():
+        raise ValueError("PassengerId contiene valores duplicados")
+
+    return df
+
+#def cast_types(df: pd.DataFrame) -> pd.DataFrame: ...           # Survived -> int, etc.
+def cast_types(df: pd.DataFrame) -> pd.DataFrame:
+    """Convierte las columnas a sus tipos de datos correspondientes."""
+
+    out = df.copy()
+
+    # Variables enteras
+    for col in ["Survived", "Pclass", "SibSp", "Parch"]:
+        out[col] = out[col].astype(int)
+
+    # Variables decimales
+    for col in ["Age", "Fare"]:
+        out[col] = out[col].astype(float)
+
+    return out
+
+
+
+
+#def add_person(df: pd.DataFrame) -> pd.DataFrame: ...           # Paso 8
+def add_person(df: pd.DataFrame) -> pd.DataFrame:
+    """Clasifica a los pasajeros como child, female o male."""
+
+    out = df.copy()
+
+    out["Person"] = np.where(
+        out["Age"] < 16,
+        "child",
+        out["Sex"]
+    )
+
+    return out
+
+
 def add_cabin_features(df: pd.DataFrame) -> pd.DataFrame: ...   # Pasos 11 y 24 (TCabin, HasCabin)
 def add_family_features(df: pd.DataFrame) -> pd.DataFrame: ...  # Paso 14 (Familia, Alone)
 def add_survivor_label(df: pd.DataFrame) -> pd.DataFrame: ...   # Paso 16 (Survivor)
