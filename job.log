@@ -16,3 +16,8 @@
 2026-11-05 21:58:11,726 | INFO | flows.00_ingestion | Leyendo fuente: https://paste.c-net.org/MarvelJinxed
 2026-11-05 21:58:13,029 | INFO | flows.00_ingestion | Bronze listo: 891 etiquetados, 418 sin etiqueta
 2026-11-05 21:58:13,030 | INFO | __main__ | Fin de etapa: ingestion
+2026-11-05 22:52:23,311 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-3/test_run_writes_bronze_and_met0/fake.csv
+2026-11-05 22:52:23,317 | INFO | flows.00_ingestion | Bronze listo: 3 etiquetados, 2 sin etiqueta
+2026-11-05 22:52:23,319 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-3/test_bronze_is_an_unmodified_c0/fake.csv
+2026-11-05 22:52:23,321 | INFO | flows.00_ingestion | Bronze listo: 3 etiquetados, 2 sin etiqueta
+2026-11-06 20:41:45,751 | INFO | __main__ | Inicio de etapa: silver

@@ -1,0 +1,2 @@
+2026-11-06 22:11:57,070 | INFO | flows.01_data_engineering | Desviación estándar de Age antes de imputar: 14.53
+2026-11-06 22:11:57,073 | INFO | flows.01_data_engineering | Desviación estándar de Age después de imputar: 13.01
