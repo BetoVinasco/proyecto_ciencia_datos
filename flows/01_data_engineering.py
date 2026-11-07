@@ -136,7 +136,22 @@ def add_title(df: pd.DataFrame) -> pd.DataFrame:
     ).str.strip()
     return out
 
-def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame: ...   # Paso 26
+#def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame: ...   # Paso 26
+def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame:
+    """Consolida los títulos poco frecuentes en categorías generales."""
+
+    out = df.copy()
+
+    # Agrupar títulos equivalentes
+    out["TTitulo"] = out["TTitulo"].replace(TITLE_MAP)
+
+    # Agrupar los títulos restantes como Otro
+    out["TTitulo"] = out["TTitulo"].where(
+        out["TTitulo"].isin(MAIN_TITLES),
+        "Otro"
+    )
+
+    return out
 
 
 #def impute_embarked(df: pd.DataFrame) -> pd.DataFrame: ...      # Paso 21
@@ -194,6 +209,13 @@ def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
 
     mapa = {letra: i for i, letra in enumerate(DECKS)}
     out["NCabin"] = out["TCabin"].map(mapa)
+
+    out["NTitulo"] = out["TTitulo"].map({
+        "Mr": 0,
+        "Mrs": 1,
+        "Miss": 2,
+        "Otro": 3
+    })
 
     return out
 
