@@ -1,3 +1,6 @@
+SHELL := /bin/bash
+export PATH := $(CURDIR)/.venv/bin:$(PATH)
+
 .PHONY: install ingest silver gold train pipeline test lint clean
 
 install:

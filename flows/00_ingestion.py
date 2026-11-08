@@ -6,7 +6,7 @@ un archivo aparte (_ingestion_metadata.json); nunca se alteran los datos.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -18,10 +18,34 @@ from flows.common.paths import (
     BRONZE,
     BRONZE_LABELED_NAME,
     BRONZE_METADATA_NAME,
+    BRONZE_QUALITY_NAME,
     BRONZE_UNLABELED_NAME,
 )
 
 log = get_logger(__name__)
+
+
+def quality_report(df: pd.DataFrame) -> dict:
+    """Resumen de calidad: dimensiones, tipos y faltantes por columna.
+
+    Debe devolver un dict con las claves:
+      n_rows, n_cols, dtypes ({col: str(dtype)}), nulls ({col: int}), null_pct ({col: float 0-100}).
+    """
+    n_rows = int(df.shape[0])
+    n_cols = int(df.shape[1])
+    dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
+    nulls = {col: int(val) for col, val in df.isnull().sum().items()}
+    null_pct = {
+        col: round(float((val / n_rows) * 100), 2) if n_rows > 0 else 0.0
+        for col, val in df.isnull().sum().items()
+    }
+    return {
+        "n_rows": n_rows,
+        "n_cols": n_cols,
+        "dtypes": dtypes,
+        "nulls": nulls,
+        "null_pct": null_pct,
+    }
 
 
 def read_source(source: str) -> pd.DataFrame:
@@ -36,10 +60,8 @@ def split_labeled(df: pd.DataFrame, n_labeled: int) -> tuple[pd.DataFrame, pd.Da
     return labeled, unlabeled
 
 
-
 def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path = BRONZE) -> dict:
     """Descarga, divide y guarda en Bronze. Devuelve los metadatos de la ingesta."""
-
     source = source or settings.local_path or settings.data_url
     n_labeled = n_labeled or settings.n_labeled
 
@@ -47,77 +69,28 @@ def run(source: str | None = None, n_labeled: int | None = None, out_dir: Path =
     df = read_source(source)
     labeled, unlabeled = split_labeled(df, n_labeled)
 
-    # Crear la carpeta de salida antes de guardar archivos
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generar reporte automático de calidad
-    report = quality_report(labeled)
-
-    (out_dir / "_quality_report.json").write_text(
-        json.dumps(report, indent=2, ensure_ascii=False),
-        encoding="utf-8"
-    )
-
-    # Guardar los datos etiquetados y sin etiquetar
     labeled_path = out_dir / BRONZE_LABELED_NAME
     unlabeled_path = out_dir / BRONZE_UNLABELED_NAME
-
     labeled.to_csv(labeled_path, index=False)
     unlabeled.to_csv(unlabeled_path, index=False)
 
-    # Generar metadatos de la ingesta
     metadata = {
         "source": source,
-        "ingested_at": datetime.now(timezone.utc).isoformat(),
+        "ingested_at": datetime.now(UTC).isoformat(),
         "rows_labeled": len(labeled),
         "rows_unlabeled": len(unlabeled),
         "columns": list(df.columns),
         "sha256_labeled": sha256_of(labeled_path),
         "sha256_unlabeled": sha256_of(unlabeled_path),
     }
-
     (out_dir / BRONZE_METADATA_NAME).write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False),
-        encoding="utf-8"
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-
-    log.info(
-        "Bronze listo: %d etiquetados, %d sin etiqueta",
-        len(labeled), len(unlabeled)
+    report = quality_report(df)
+    (out_dir / BRONZE_QUALITY_NAME).write_text(
+        json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-
+    log.info("Bronze listo: %d etiquetados, %d sin etiqueta", len(labeled), len(unlabeled))
     return metadata
-
-
-
-def quality_report(df: pd.DataFrame) -> dict:
-    """Genera un resumen de calidad del DataFrame."""
-
-    n_rows, n_cols = df.shape
-
-    # Tipos de datos por columna
-    dtypes = {
-        col: str(dtype)
-        for col, dtype in df.dtypes.items()
-    }
-
-    # Cantidad de valores faltantes
-    nulls = {
-        col: int(count)
-        for col, count in df.isnull().sum().items()
-    }
-
-    # Porcentaje de valores faltantes
-    null_pct = {
-        col: float((count / n_rows * 100) if n_rows else 0.0)
-        for col, count in df.isnull().sum().items()
-    }
-
-    return {
-        "n_rows": int(n_rows),
-        "n_cols": int(n_cols),
-        "dtypes": dtypes,
-        "nulls": nulls,
-        "null_pct": null_pct,
-    }

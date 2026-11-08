@@ -6,7 +6,7 @@ Este repositorio implementa un proyecto integral de Ciencia de Datos y Machine L
 
 ## 👥 Autores y Créditos
 
-* **Autor / Desarrollador:** Carlos Alberto Vinasco ([BetoVinasco](https://github.com/BetoVinasco) — `betovinasco46@gmail.com`)
+* **Autor / Desarrollador:** Carlos Alberto Vinasco ([@BetoVinasco](https://github.com/BetoVinasco) — `betovinasco46@gmail.com`)
 * **Docente / Diseño del Taller:** Diego Fernando Marín ([@dfmarin](https://github.com/dfmarin) — `dfmarin@gmail.com`)
 * **Contexto:** Taller de Buenas Prácticas en Ciencia de Datos e Inteligencia Artificial.
 

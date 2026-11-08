@@ -12,7 +12,11 @@ import pandas as pd
 
 from flows.common.logging import get_logger
 from flows.common.paths import (
-    BRONZE, BRONZE_LABELED_NAME, SILVER, SILVER_FINAL_NAME, SILVER_NAME,
+    BRONZE,
+    BRONZE_LABELED_NAME,
+    SILVER,
+    SILVER_FINAL_NAME,
+    SILVER_NAME,
 )
 
 log = get_logger(__name__)
@@ -27,200 +31,143 @@ TITLE_MAP = {                        # consolidación de títulos (Paso 26)
     "Lady": "Miss", "Mlle": "Miss", "Ms": "Miss",
 }
 MAIN_TITLES = ["Mr", "Mrs", "Miss"]
+REQUIRED_SILVER_NON_NULL = [
+    "Survived", "Pclass", "Age", "Fare", "Embarked", "Person", "Alone",
+    "TCabin", "TTitulo", "NSex", "NEmbarked", "NCabin", "NTitulo",
+]
 
 
-#def validate_bronze(df: pd.DataFrame) -> pd.DataFrame: ...      # contrato de entrada
 def validate_bronze(df: pd.DataFrame) -> pd.DataFrame:
-    """Valida que Bronze tenga las columnas esperadas y sin IDs duplicados."""
-
+    """Contrato de entrada: valida columnas esperadas y unicidad de PassengerId."""
     missing = set(EXPECTED_COLUMNS) - set(df.columns)
-
     if missing:
-        raise ValueError(f"Faltan columnas obligatorias: {sorted(missing)}")
-
+        raise ValueError(f"Faltan columnas esperadas en Bronze: {sorted(missing)}")
     if df["PassengerId"].duplicated().any():
-        raise ValueError("PassengerId contiene valores duplicados")
-
+        raise ValueError("Existen PassengerId duplicados en los datos de Bronze")
     return df
 
-#def cast_types(df: pd.DataFrame) -> pd.DataFrame: ...           # Survived -> int, etc.
+
 def cast_types(df: pd.DataFrame) -> pd.DataFrame:
-    """Convierte las columnas a sus tipos de datos correspondientes."""
-
-    out = df.copy()
-
-    # Variables enteras
-    for col in ["Survived", "Pclass", "SibSp", "Parch"]:
-        out[col] = out[col].astype(int)
-
-    # Variables decimales
+    """Tipado estricto: numéricas y categóricas ordinales."""
+    df = df.copy()
+    int_cols = ["Pclass", "SibSp", "Parch"]
+    if "Survived" in df.columns and df["Survived"].notna().all():
+        int_cols.append("Survived")
+    for col in int_cols:
+        if col in df.columns:
+            df[col] = df[col].astype(int)
     for col in ["Age", "Fare"]:
-        out[col] = out[col].astype(float)
-
-    return out
-
-
+        if col in df.columns:
+            df[col] = df[col].astype(float)
+    return df
 
 
-#def add_person(df: pd.DataFrame) -> pd.DataFrame: ...           # Paso 8
 def add_person(df: pd.DataFrame) -> pd.DataFrame:
-    """Clasifica a los pasajeros como child, female o male."""
+    """Agrega 'Person': 'child' si Age < 16; si no, el valor de Sex.
 
-    out = df.copy()
-
-    out["Person"] = np.where(
-        out["Age"] < 16,
-        "child",
-        out["Sex"]
-    )
-
-    return out
-
-
-#def add_cabin_features(df: pd.DataFrame) -> pd.DataFrame: ...   # Pasos 11 y 24 (TCabin, HasCabin)
-def add_cabin_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Extrae la cubierta de la cabina y crea indicador de disponibilidad."""
-
-    out = df.copy()
-
-    # Extraer la primera letra de Cabin.
-    # Si no existe información, asignar X (desconocida).
-    out["TCabin"] = out["Cabin"].str[0].fillna("X")
-
-    # Indicar si el pasajero tiene una cabina registrada.
-    # 1 = Tiene cabina, 0 = No tiene cabina.
-    out["HasCabin"] = out["Cabin"].notna().astype(int)
-
-    return out
-
-
-#def add_family_features(df: pd.DataFrame) -> pd.DataFrame: ...  # Paso 14 (Familia, Alone)
-def add_family_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrega el tamaño de familia y clasifica si el pasajero viajaba solo."""
-
-    out = df.copy()
-
-    # Número de familiares a bordo
-    out["Familia"] = out["SibSp"] + out["Parch"]
-
-    # Clasificación del pasajero
-    out["Alone"] = np.where(
-        out["Familia"] > 0,
-        "with Family",
-        "Alone"
-    )
-
-    return out
-
-
-#def add_survivor_label(df: pd.DataFrame) -> pd.DataFrame: ...   # Paso 16 (Survivor)
-def add_survivor_label(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrega Survivor mapeando 0 -> No y 1 -> Yes."""
-
-    out = df.copy()
-
-    out["Survivor"] = out["Survived"].map({
-        0: "No",
-        1: "Yes"
-    })
-
-    return out
-
-#def add_title(df: pd.DataFrame) -> pd.DataFrame: ...            # Paso 25 (TTitulo)
-def add_title(df: pd.DataFrame) -> pd.DataFrame:
-    """Extrae el título del nombre del pasajero."""
-    out = df.copy()
-    patron = r',\s*([^.]+)\.'
-    out["TTitulo"] = out["Name"].str.extract(
-        patron, expand=False
-    ).str.strip()
-    return out
-
-#def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame: ...   # Paso 26
-def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame:
-    """Consolida los títulos poco frecuentes en categorías generales."""
-
-    out = df.copy()
-
-    # Agrupar títulos equivalentes
-    out["TTitulo"] = out["TTitulo"].replace(TITLE_MAP)
-
-    # Agrupar los títulos restantes como Otro
-    out["TTitulo"] = out["TTitulo"].where(
-        out["TTitulo"].isin(MAIN_TITLES),
-        "Otro"
-    )
-
-    return out
-
-
-#def impute_embarked(df: pd.DataFrame) -> pd.DataFrame: ...      # Paso 21
-def impute_embarked(df: pd.DataFrame) -> pd.DataFrame:
-    """Imputa los valores faltantes de Embarked utilizando la moda."""
-    out = df.copy()
-    moda = out["Embarked"].mode()[0]
-    out["Embarked"] = out["Embarked"].fillna(moda)
-    return out
-
-#def impute_age(df: pd.DataFrame) -> pd.DataFrame: ...           # Paso 22
-def impute_age(df: pd.DataFrame) -> pd.DataFrame:
-    """Imputa Age con el promedio por Sex.
-
-    Conserva la edad original en AgeOriginal y marca las filas
-    imputadas en AgeImputada.
+    Regla para edad desconocida (NaN): se usa Sex. Esto subestima a los niños
+    sin edad registrada; el sesgo se cuantifica en el Reto 8.1.
     """
-    out = df.copy()
+    df = df.copy()
+    df["Person"] = np.where(df["Age"] < 16, "child", df["Sex"])
+    return df
 
-    # 1. Conservar la edad original y marcar los valores faltantes
-    out["AgeOriginal"] = out["Age"]
-    out["AgeImputada"] = out["Age"].isna()
 
-    # 2. Calcular el promedio de edad por género
-    promedios = out.groupby("Sex")["Age"].mean()
+def add_cabin_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrega 'TCabin' (primera letra de Cabin, 'X' si es nula) y 'HasCabin' (0/1)."""
+    df = df.copy()
+    df["TCabin"] = df["Cabin"].str[0].fillna("X")
+    df["HasCabin"] = df["Cabin"].notna().astype(int)
+    return df
 
-    # 3. Rellenar las edades faltantes con el promedio de su género
-    out["Age"] = out["Age"].fillna(out["Sex"].map(promedios))
 
-    # 4. Registrar la desviación estándar antes y después
-    log.info("Desviación estándar de Age antes de imputar: %.2f",
-             out["AgeOriginal"].std())
+def add_family_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrega 'Familia' = SibSp + Parch y 'Alone' ('with Family' si Familia > 0, 'Alone' si no)."""
+    df = df.copy()
+    df["Familia"] = df["SibSp"] + df["Parch"]
+    df["Alone"] = np.where(df["Familia"] > 0, "with Family", "Alone")
+    return df
 
-    log.info("Desviación estándar de Age después de imputar: %.2f",
-             out["Age"].std())
 
-    return out
+def add_survivor_label(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrega 'Survivor' mapeando 0 -> 'No' y 1 -> 'Yes' (solo para etiquetar gráficos)."""
+    df = df.copy()
+    if "Survived" in df.columns:
+        df["Survivor"] = df["Survived"].map({0: "No", 1: "Yes"})
+    return df
 
-#def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame: ...  # Pasos 21, 23, 24, 26
+
+def add_title(df: pd.DataFrame) -> pd.DataFrame:
+    """Extrae el título de cortesía desde la columna 'Name'."""
+    df = df.copy()
+    df["TTitulo"] = df["Name"].str.extract(r',\s*([^.]+)\.', expand=False).str.strip()
+    return df
+
+
+def consolidate_titles(df: pd.DataFrame) -> pd.DataFrame:
+    """Consolida títulos raros mapeando a Mr/Mrs/Miss o agrupando en 'Otro'."""
+    df = df.copy()
+    df["TTitulo"] = df["TTitulo"].replace(TITLE_MAP)
+    df["TTitulo"] = df["TTitulo"].where(df["TTitulo"].isin(MAIN_TITLES), "Otro")
+    return df
+
+
+def impute_embarked(df: pd.DataFrame) -> pd.DataFrame:
+    """Imputa valores faltantes en 'Embarked' con la moda."""
+    df = df.copy()
+    if "Embarked" in df.columns and df["Embarked"].notna().any():
+        mode_val = df["Embarked"].mode()[0]
+        df["Embarked"] = df["Embarked"].fillna(mode_val)
+    return df
+
+
+def impute_age(df: pd.DataFrame) -> pd.DataFrame:
+    """Imputa 'Age' con el promedio por 'Sex'.
+
+    Conserva la edad original en 'AgeOriginal' (con NaN) y marca las filas
+    imputadas en 'AgeImputada' (bool). Usada para EXPLORAR; el modelo (Parte 11)
+    vuelve a imputar solo con datos de entrenamiento.
+    """
+    df = df.copy()
+    std_before = df["Age"].std()
+    df["AgeOriginal"] = df["Age"]
+    df["AgeImputada"] = df["Age"].isna()
+    promedios = df.groupby("Sex")["Age"].mean()
+    df["Age"] = df["Age"].fillna(df["Sex"].map(promedios))
+    std_after = df["Age"].std()
+    log.info("Desviación estándar de Age antes de imputar: %.2f, después: %.2f", std_before, std_after)
+    return df
+
+
 def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """Codifica las variables categóricas en columnas numéricas."""
+    """Codifica variables categóricas a representaciones numéricas fijas."""
+    df = df.copy()
+    sex_map = {"female": 0, "male": 1}
+    df["NSex"] = df["Sex"].map(sex_map).astype(int)
 
-    out = df.copy()
+    embarked_map = {"S": 0, "C": 1, "Q": 2}
+    df["NEmbarked"] = df["Embarked"].map(embarked_map).astype(int)
 
-    out["NEmbarked"] = out["Embarked"].map({
-        "S": 0,
-        "C": 1,
-        "Q": 2
-    })
+    deck_map = {letra: i for i, letra in enumerate(DECKS)}
+    df["NCabin"] = df["TCabin"].map(deck_map).astype(int)
 
-    out["NSex"] = out["Sex"].map({
-        "female": 0,
-        "male": 1
-    })
+    title_map = {"Mr": 0, "Mrs": 1, "Miss": 2, "Otro": 3}
+    df["NTitulo"] = df["TTitulo"].map(title_map).astype(int)
+    return df
 
-    mapa = {letra: i for i, letra in enumerate(DECKS)}
-    out["NCabin"] = out["TCabin"].map(mapa)
 
-    out["NTitulo"] = out["TTitulo"].map({
-        "Mr": 0,
-        "Mrs": 1,
-        "Miss": 2,
-        "Otro": 3
-    })
+def drop_original_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Devuelve una COPIA sin Name, Sex, Embarked y Cabin."""
+    cols_to_drop = [col for col in ["Name", "Sex", "Embarked", "Cabin"] if col in df.columns]
+    return df.drop(columns=cols_to_drop)
 
-    return out
 
-def drop_original_columns(df: pd.DataFrame) -> pd.DataFrame: ...  # Paso 32
-def validate_silver(df: pd.DataFrame) -> pd.DataFrame: ...      # Paso 33
+def validate_silver(df: pd.DataFrame) -> pd.DataFrame:
+    """Contrato de salida: valida ausencia de nulos en columnas procesadas."""
+    for col in REQUIRED_SILVER_NON_NULL:
+        if col in df.columns and df[col].isna().any():
+            raise ValueError(f"Columna requerida '{col}' contiene valores nulos en capa Silver")
+    return df
 
 
 def build_silver(bronze: pd.DataFrame) -> pd.DataFrame:

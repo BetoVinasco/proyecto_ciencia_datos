@@ -1,2 +1,6 @@
-2026-11-06 22:11:57,070 | INFO | flows.01_data_engineering | Desviación estándar de Age antes de imputar: 14.53
-2026-11-06 22:11:57,073 | INFO | flows.01_data_engineering | Desviación estándar de Age después de imputar: 13.01
+2026-11-08 01:31:40,441 | INFO | flows.05_ml_models | CV dummy - ROC-AUC: 0.5000 (+/- 0.0000)
+2026-11-08 01:31:40,661 | INFO | flows.05_ml_models | CV logreg - ROC-AUC: 0.8585 (+/- 0.0236)
+2026-11-08 01:31:40,853 | INFO | flows.05_ml_models | CV tree - ROC-AUC: 0.8468 (+/- 0.0260)
+2026-11-08 01:31:42,928 | INFO | flows.05_ml_models | CV forest - ROC-AUC: 0.8653 (+/- 0.0161)
+2026-11-08 01:31:45,100 | INFO | flows.05_ml_models | CV hgb - ROC-AUC: 0.8867 (+/- 0.0194)
+2026-11-08 01:31:45,377 | INFO | flows.05_ml_models | CV knn - ROC-AUC: 0.8408 (+/- 0.0168)

@@ -21,3 +21,7 @@
 2026-11-05 22:52:23,319 | INFO | flows.00_ingestion | Leyendo fuente: /private/var/folders/0c/v9_0cnwn6179jf_d41m6nm300000gn/T/pytest-of-beto/pytest-3/test_bronze_is_an_unmodified_c0/fake.csv
 2026-11-05 22:52:23,321 | INFO | flows.00_ingestion | Bronze listo: 3 etiquetados, 2 sin etiqueta
 2026-11-06 20:41:45,751 | INFO | __main__ | Inicio de etapa: silver
+2026-11-08 01:19:27,097 | INFO | __main__ | Inicio de etapa: silver
+2026-11-08 01:19:27,123 | INFO | flows.01_data_engineering | Desviación estándar de Age antes de imputar: 14.53, después: 13.01
+2026-11-08 01:19:27,159 | INFO | flows.01_data_engineering | Silver listo: 891 filas, 25 columnas
+2026-11-08 01:19:27,159 | INFO | __main__ | Fin de etapa: silver
